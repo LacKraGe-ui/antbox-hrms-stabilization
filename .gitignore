@@ -1,0 +1,16 @@
+node_modules/
+dist/
+*.log
+
+# Local databases / runtime artifacts
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/*.sqlite
+
+# Env
+.env
+.env.local
+
+# OS
+.DS_Store

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AntBox HRMS · Stabilization Console</title>
+<link rel="icon" href="/assets/antbox-logo.png" />
+<style>
+  :root {
+    --bg: #0c0a14;
+    --bg-2: #0f0c1a;
+    --surface: #16121f;
+    --surface-2: #1c1730;
+    --surface-raised: #221b36;
+    --border: #2a2340;
+    --border-soft: #221c34;
+    --text: #ECEAF2;
+    --text-dim: #9A93AD;
+    --text-faint: #6A6280;
+    --brand: #8E43AC;
+    --brand-lite: #B76FD4;
+    --brand-soft: #8E43AC24;
+    --ok: #46c76a;
+    --ok-soft: #46c76a1f;
+    --warn: #E3A008;
+    --warn-soft: #E3A0081f;
+    --danger: #F0556A;
+    --danger-soft: #F0556A1f;
+    --shadow: 0 18px 50px -18px rgba(0,0,0,0.7);
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+    --mono: 'SFMono-Regular', ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace;
+    --sp-fast: 140ms cubic-bezier(0.22, 1, 0.36, 1);
+    --sp: 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+  body {
+    background:
+      radial-gradient(900px 480px at 12% -8%, #8E43AC1f, transparent 60%),
+      radial-gradient(760px 420px at 100% 0%, #5b2f8a17, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.55;
+    min-height: 100vh;
+    padding-bottom: 80px;
+    letter-spacing: -0.01em;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 28px;
+    background: rgba(12,10,20,0.72);
+    backdrop-filter: saturate(160%) blur(18px);
+    -webkit-backdrop-filter: saturate(160%) blur(18px);
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  .logo-chip {
+    background: #fff;
+    border-radius: 9px;
+    padding: 7px 11px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+    flex-shrink: 0;
+  }
+  .logo-chip img { height: 20px; display: block; }
+
+  .header-titles { display: flex; flex-direction: column; line-height: 1.2; }
+  .header-titles .t1 { font-size: 14px; font-weight: 600; letter-spacing: -0.02em; }
+  .header-titles .t2 { font-size: 11.5px; color: var(--text-faint); font-family: var(--mono); }
+
+  .header-spacer { flex: 1; }
+
+  .health-pill {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12.5px; font-weight: 550;
+    padding: 7px 13px; border-radius: 999px;
+    border: 1px solid var(--ok-soft);
+    background: var(--ok-soft); color: var(--ok);
+    transition: all var(--sp);
+  }
+  .health-pill.bad { border-color: var(--danger-soft); background: var(--danger-soft); color: var(--danger); }
+  .health-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 3px currentColor; animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(70,199,106,0.35);} 50% { box-shadow: 0 0 0 5px rgba(70,199,106,0);} }
+
+  /* ---------- Layout ---------- */
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 28px 28px 0; }
+
+  .intro { margin: 8px 0 26px; }
+  .intro h1 { font-size: 25px; font-weight: 650; letter-spacing: -0.025em; line-height: 1.15; max-width: 22ch; }
+  .intro p { margin-top: 9px; color: var(--text-dim); font-size: 14.5px; max-width: 74ch; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  .col-span { grid-column: 1 / -1; }
+
+  .card {
+    background: linear-gradient(180deg, var(--surface-2), var(--surface));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card-head { padding: 18px 20px 14px; display: flex; align-items: center; gap: 11px; }
+  .card-head .ic { width: 26px; height: 26px; flex-shrink: 0; color: var(--brand-lite); }
+  .card-head h2 { font-size: 15.5px; font-weight: 620; letter-spacing: -0.02em; }
+  .card-head .sub { font-size: 12px; color: var(--text-faint); margin-left: auto; font-family: var(--mono); }
+  .card-body { padding: 4px 20px 20px; }
+
+  /* ---------- Big record counter ---------- */
+  .counter-row { display: flex; gap: 14px; margin-bottom: 4px; }
+  .counter {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 13px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color var(--sp), background var(--sp);
+  }
+  .counter .cval { font-size: 34px; font-weight: 680; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .counter .clabel { font-size: 12px; color: var(--text-dim); margin-top: 7px; }
+  .counter.flash-ok { border-color: var(--ok); background: var(--ok-soft); }
+  .counter.flash-bad { border-color: var(--danger); background: var(--danger-soft); }
+  .counter .guard-badge {
+    position: absolute; top: 12px; right: 12px;
+    font-size: 10px; font-family: var(--mono); color: var(--ok);
+    background: var(--ok-soft); padding: 3px 7px; border-radius: 6px;
+    opacity: 0; transform: translateY(-4px); transition: all var(--sp);
+  }
+  .counter .guard-badge.show { opacity: 1; transform: translateY(0); }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    font-family: var(--sans); font-size: 13px; font-weight: 560;
+    color: var(--text); background: var(--surface-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 9px 14px; cursor: pointer;
+    transition: transform var(--sp-fast), background var(--sp-fast), border-color var(--sp-fast);
+    display: inline-flex; align-items: center; gap: 8px; user-select: none;
+    touch-action: manipulation;
+  }
+  .btn:hover { background: #271f3e; border-color: #352b50; }
+  .btn:active { transform: scale(0.97); }
+  .btn:focus-visible { outline: 2px solid var(--brand-lite); outline-offset: 2px; }
+  .btn .tag { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .btn.brand { background: linear-gradient(135deg, var(--brand), #6d329b); border-color: transparent; color: #fff; }
+  .btn.brand:hover { filter: brightness(1.08); background: linear-gradient(135deg, var(--brand), #6d329b); }
+  .btn.ghost { background: transparent; }
+  .btn.danger-ghost { color: var(--danger); border-color: var(--danger-soft); background: var(--danger-soft); }
+  .btn.danger-ghost:hover { background: #f0556a2e; }
+  .btn.warn-ghost { color: var(--warn); border-color: var(--warn-soft); background: var(--warn-soft); }
+  .btn.warn-ghost:hover { background: #e3a0082e; }
+
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+  .btn-grid .btn { justify-content: flex-start; }
+  .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-faint); margin: 16px 0 9px; font-weight: 600; }
+  .section-label:first-child { margin-top: 4px; }
+
+  /* ---------- Tables ---------- */
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); font-weight: 600; padding: 7px 10px; border-bottom: 1px solid var(--border-soft); }
+  .tbl td { padding: 9px 10px; border-bottom: 1px solid var(--border-soft); color: var(--text); }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr { transition: background var(--sp-fast); }
+  .tbl tbody tr:hover { background: #ffffff05; }
+  .badge { font-size: 11px; font-weight: 560; padding: 2px 9px; border-radius: 999px; font-family: var(--mono); white-space: nowrap; }
+  .b-active,.b-approved,.b-succeeded { color: var(--ok); background: var(--ok-soft); }
+  .b-on_leave,.b-pending,.b-running,.b-unpaid { color: var(--warn); background: var(--warn-soft); }
+  .b-terminated,.b-rejected,.b-dead_letter,.b-failed { color: var(--danger); background: var(--danger-soft); }
+  .b-annual,.b-sick { color: var(--brand-lite); background: var(--brand-soft); }
+  .mono-dim { font-family: var(--mono); font-size: 11.5px; color: var(--text-faint); }
+
+  /* ---------- Audit timeline ---------- */
+  .audit-list { display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow-y: auto; }
+  .audit-item {
+    border: 1px solid var(--border-soft); border-radius: 11px; padding: 11px 13px;
+    background: var(--surface);
+    animation: slideIn 360ms cubic-bezier(0.22,1,0.36,1);
+  }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0);} }
+  .audit-item .a-top { display: flex; align-items: center; gap: 9px; }
+  .audit-item .a-reason { font-size: 12.5px; color: var(--text-dim); margin-top: 6px; line-height: 1.45; }
+  .audit-item .a-time { margin-left: auto; font-family: var(--mono); font-size: 10.5px; color: var(--text-faint); }
+  .outcome-badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 7px; font-family: var(--mono); }
+  .o-applied { color: var(--ok); background: var(--ok-soft); }
+  .o-applied_upserts_only { color: var(--warn); background: var(--warn-soft); }
+  .o-rejected_validation,.o-rejected_empty,.o-rejected_null { color: var(--danger); background: var(--danger-soft); }
+
+  .empty-note { color: var(--text-faint); font-size: 12.5px; padding: 14px 4px; text-align: center; }
+
+  /* ---------- Jobs ---------- */
+  .job-counts { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin: 4px 0 14px; }
+  .job-stat { background: var(--surface); border: 1px solid var(--border-soft); border-radius: 10px; padding: 11px 12px; text-align: center; }
+  .job-stat .n { font-size: 21px; font-weight: 660; font-variant-numeric: tabular-nums; }
+  .job-stat .l { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-top: 3px; }
+  .job-stat.s-succeeded .n { color: var(--ok); }
+  .job-stat.s-pending .n { color: var(--warn); }
+  .job-stat.s-dead .n { color: var(--danger); }
+
+  .ledger { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+  .ledger .lchip { font-size: 12px; color: var(--text-dim); background: var(--surface); border: 1px solid var(--border-soft); padding: 6px 11px; border-radius: 9px; }
+  .ledger .lchip b { color: var(--text); font-variant-numeric: tabular-nums; }
+
+  .job-list { display: flex; flex-direction: column; gap: 7px; max-height: 260px; overflow-y: auto; margin-top: 12px; }
+  .job-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--border-soft); border-radius: 10px; background: var(--surface); font-size: 12.5px; transition: background var(--sp-fast); }
+  .job-row .jtype { font-family: var(--mono); font-size: 11.5px; color: var(--text-dim); }
+  .job-row .jattempts { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--text-faint); }
+  .job-row .jerr { font-size: 11px; color: var(--danger); font-family: var(--mono); }
+
+  /* ---------- Health checks ---------- */
+  .checks { display: flex; flex-direction: column; gap: 8px; }
+  .check { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border: 1px solid var(--border-soft); border-radius: 11px; background: var(--surface); }
+  .check .ci { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .check.ok .ci { background: var(--ok-soft); color: var(--ok); }
+  .check.bad .ci { background: var(--danger-soft); color: var(--danger); }
+  .check .cname { font-size: 13px; font-weight: 550; text-transform: capitalize; }
+  .check .cdetail { margin-left: auto; font-size: 11.5px; color: var(--text-faint); font-family: var(--mono); }
+  .preflight-note { margin-top: 12px; font-size: 12px; color: var(--text-dim); line-height: 1.5; padding: 12px 14px; background: var(--brand-soft); border: 1px solid #8E43AC33; border-radius: 11px; }
+  .preflight-note code { font-family: var(--mono); font-size: 11.5px; color: var(--brand-lite); background: #ffffff0a; padding: 1px 5px; border-radius: 4px; }
+
+  /* ---------- Toast ---------- */
+  #toasts { position: fixed; bottom: 22px; right: 22px; z-index: 100; display: flex; flex-direction: column; gap: 10px; max-width: 380px; }
+  .toast {
+    background: var(--surface-raised); border: 1px solid var(--border);
+    border-left: 3px solid var(--brand);
+    border-radius: 12px; padding: 13px 16px; box-shadow: var(--shadow);
+    animation: toastIn 400ms cubic-bezier(0.22,1,0.36,1);
+  }
+  .toast.ok { border-left-color: var(--ok); }
+  .toast.warn { border-left-color: var(--warn); }
+  .toast.bad { border-left-color: var(--danger); }
+  .toast .tt { font-size: 13px; font-weight: 620; display: flex; align-items: center; gap: 8px; }
+  .toast .tb { font-size: 12.5px; color: var(--text-dim); margin-top: 5px; line-height: 1.45; }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(24px) scale(0.96);} to { opacity: 1; transform: translateX(0) scale(1);} }
+  .toast.leaving { animation: toastOut 300ms cubic-bezier(0.4,0,1,1) forwards; }
+  @keyframes toastOut { to { opacity: 0; transform: translateX(24px) scale(0.96); } }
+
+  footer { max-width: 1200px; margin: 40px auto 0; padding: 20px 28px; color: var(--text-faint); font-size: 12px; display: flex; justify-content: space-between; border-top: 1px solid var(--border-soft); }
+
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+    .wrap { padding: 20px 16px 0; }
+    header { padding: 12px 16px; }
+    .header-titles .t2 { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-chip"><img src="/assets/antbox-logo.png" alt="AntBox" /></div>
+  <div class="header-titles">
+    <span class="t1">HRMS Stabilization Console</span>
+    <span class="t2">production-safety control plane</span>
+  </div>
+  <div class="header-spacer"></div>
+  <div class="health-pill" id="healthPill">
+    <span class="health-dot"></span><span id="healthText">checking…</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="intro">
+    <h1>Every guardrail that would have stopped the incident, live.</h1>
+    <p>After a destructive Google&nbsp;Sheets sync deleted live records, the database is now the sole system of record. Trigger any sync below — including the ones designed to fail — and watch the safeguards refuse to lose data. Nothing here can drop a record it shouldn't.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- SYNC PANEL -->
+    <section class="card col-span" id="syncCard">
+      <div class="card-head">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9h-3m-6 9a9 9 0 0 1-9-9m9 9v-3m-9-6a9 9 0 0 1 9-9m-9 9h3m6-9v3" stroke-linecap="round"/></svg>
+        <h2>Multi-system sync — non-destructive by design</h2>
+        <span class="sub" id="syncSub">db is system of record</span>
+      </div>
+      <div class="card-body">
+        <div class="counter-row">
+          <div class="counter" id="cEmp">
+            <div class="guard-badge" id="empGuard">protected</div>
+            <div class="cval" id="empVal">–</div>
+            <div class="clabel">Active employee records</div>
+          </div>
+          <div class="counter" id="cLeave">
+            <div class="guard-badge" id="leaveGuard">protected</div>
+            <div class="cval" id="leaveVal">–</div>
+            <div class="clabel">Active leave requests</div>
+          </div>
+        </div>
+
+        <div class="section-label">Safe syncs</div>
+        <div class="btn-grid">
+          <button class="btn" data-sync="healthy"><span class="tag" style="background:var(--ok)"></span>Healthy round-trip</button>
+          <button class="btn" data-sync="partial_update"><span class="tag" style="background:var(--ok)"></span>Partial update (1 offboard)</button>
+        </div>
+
+        <div class="section-label">Hostile syncs — these must be refused</div>
+        <div class="btn-grid">
+          <button class="btn danger-ghost" data-sync="empty">Empty source (the incident)</button>
+          <button class="btn danger-ghost" data-sync="malformed">Malformed payload</button>
+          <button class="btn danger-ghost" data-sync="null">Null / no body</button>
+          <button class="btn warn-ghost" data-sync="mass_delete">Mass-delete anomaly (90%)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- EMPLOYEES -->
+    <section class="card">
+      <div class="card-head">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm14 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h2>Employees</h2>
+        <span class="sub" id="empCount">–</span>
+      </div>
+      <div class="card-body">
+        <table class="tbl"><thead><tr><th>Name</th><th>Dept</th><th>Status</th></tr></thead>
+        <tbody id="empBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- LEAVE -->
+    <section class="card">
+      <div class="card-head">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h2>Leave requests</h2>
+        <span class="sub" id="leaveCount">–</span>
+      </div>
+      <div class="card-body">
+        <table class="tbl"><thead><tr><th>Employee</th><th>Type</th><th>Status</th></tr></thead>
+        <tbody id="leaveBody"></tbody></table>
+      </div>
+    </section>
+
+    <!-- AUDIT -->
+    <section class="card col-span">
+      <div class="card-head">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z M14 2v6h6 M9 15l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h2>Sync audit trail</h2>
+        <span class="sub">every decision, logged</span>
+      </div>
+      <div class="card-body">
+        <div class="audit-list" id="auditList"><div class="empty-note">No syncs yet — trigger one above.</div></div>
+      </div>
+    </section>
+
+    <!-- JOBS -->
+    <section class="card">
+      <div class="card-head">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h2>Background jobs</h2>
+        <span class="sub">idempotent · retried</span>
+      </div>
+      <div class="card-body">
+        <div class="job-counts">
+          <div class="job-stat s-pending"><div class="n" id="jcPending">0</div><div class="l">Pending</div></div>
+          <div class="job-stat"><div class="n" id="jcRunning">0</div><div class="l">Running</div></div>
+          <div class="job-stat s-succeeded"><div class="n" id="jcSucceeded">0</div><div class="l">Done</div></div>
+          <div class="job-stat s-dead"><div class="n" id="jcDead">0</div><div class="l">Dead-letter</div></div>
+        </div>
+        <div class="btn-grid">
+          <button class="btn" data-job="send_email"><span class="tag" style="background:var(--brand-lite)"></span>Enqueue email ×2 (dedupe)</button>
+          <button class="btn" data-job="calendar_sync"><span class="tag" style="background:var(--brand-lite)"></span>Calendar sync</button>
+          <button class="btn warn-ghost" data-job="webhook_flaky">Webhook: fails 2×, then OK</button>
+          <button class="btn danger-ghost" data-job="webhook_dead">Webhook: always fails → DLQ</button>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:9px;">
+          <button class="btn brand" id="processBtn" style="flex:1; justify-content:center;">Process queue ▸</button>
+        </div>
+        <div class="ledger">
+          <div class="lchip">Emails sent <b id="ledEmails">0</b></div>
+          <div class="lchip">Calendar events <b id="ledCal">0</b></div>
+          <div class="lchip">Webhooks <b id="ledHook">0</b></div>
+        </div>
+        <div class="job-list" id="jobList"></div>
+      </div>
+    </section>
+
+    <!-- HEALTH -->
+    <section class="card">
+      <div class="card-head">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M22 12h-4l-3 9L9 3l-3 9H2" stroke-linecap="round" stroke-linejoin="round" opacity="0"/><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21l8.84-8.61a5.5 5.5 0 0 0 0-7.78Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h2>Health &amp; preflight</h2>
+        <span class="sub">fail closed</span>
+      </div>
+      <div class="card-body">
+        <div class="checks" id="checksList"></div>
+        <div class="preflight-note">
+          A pre-deploy gate — <code>npm run preflight</code> — halts the rollout with a non-zero exit if required env vars are missing or migrations are pending, so a bad deploy stops <em>before</em> it can touch data. The readiness probe above enforces the same at runtime.
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<footer>
+  <span>AntBox HRMS — Production Stabilization Trial</span>
+  <span>Database is the system of record · external targets can never trigger unvalidated deletes</span>
+</footer>
+
+<div id="toasts"></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const api = (path, body) =>
+    fetch(path, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {})
+      .then((r) => r.json());
+
+  const OUTCOME_LABEL = {
+    applied: 'APPLIED',
+    applied_upserts_only: 'DELETES REFUSED',
+    rejected_validation: 'REJECTED · VALIDATION',
+    rejected_empty: 'REJECTED · EMPTY',
+    rejected_null: 'REJECTED · NULL',
+  };
+  const OUTCOME_TONE = {
+    applied: 'ok', applied_upserts_only: 'warn',
+    rejected_validation: 'bad', rejected_empty: 'bad', rejected_null: 'bad',
+  };
+
+  // ---- number tween (spring-ish ease) ----
+  function tween(el, to) {
+    const from = parseInt(el.textContent) || 0;
+    if (from === to) return;
+    const dur = 460, start = performance.now();
+    const ease = (t) => 1 - Math.pow(1 - t, 3);
+    function frame(now) {
+      const t = Math.min(1, (now - start) / dur);
+      el.textContent = Math.round(from + (to - from) * ease(t));
+      if (t < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ---- pointer-down press feedback (immediate, per apple-design) ----
+  document.addEventListener('pointerdown', (e) => {
+    const btn = e.target.closest('.btn, .counter');
+    if (btn && btn.classList.contains('btn')) btn.style.transform = 'scale(0.97)';
+  });
+  document.addEventListener('pointerup', () => {
+    document.querySelectorAll('.btn').forEach((b) => (b.style.transform = ''));
+  });
+
+  // ---- toast ----
+  function toast(tone, title, body) {
+    const el = document.createElement('div');
+    el.className = 'toast ' + tone;
+    el.innerHTML = '<div class="tt">' + title + '</div><div class="tb">' + body + '</div>';
+    $('toasts').appendChild(el);
+    setTimeout(() => { el.classList.add('leaving'); setTimeout(() => el.remove(), 320); }, 5200);
+  }
+
+  // ---- flash a counter ----
+  function flashCounter(id, guardId, tone, showGuard) {
+    const c = $(id), g = $(guardId);
+    c.classList.remove('flash-ok', 'flash-bad');
+    void c.offsetWidth;
+    c.classList.add(tone === 'bad' ? 'flash-bad' : 'flash-ok');
+    if (showGuard) { g.textContent = 'protected'; g.classList.add('show'); }
+    setTimeout(() => { c.classList.remove('flash-ok', 'flash-bad'); g.classList.remove('show'); }, 1600);
+  }
+
+  let prevEmp = null, prevLeave = null;
+
+  function render(state) {
+    // health
+    const ok = state.health.status === 'ok';
+    const pill = $('healthPill');
+    pill.classList.toggle('bad', !ok);
+    $('healthText').textContent = ok ? 'Ready · healthy' : 'Degraded';
+
+    // counters
+    tween($('empVal'), state.counts.employees);
+    tween($('leaveVal'), state.counts.leave);
+    $('empCount').textContent = state.counts.employees + ' active';
+    $('leaveCount').textContent = state.counts.leave + ' active';
+
+    // employees table
+    $('empBody').innerHTML = state.employees.map((e) =>
+      '<tr><td>' + esc(e.fullName) + '<div class="mono-dim">' + esc(e.email) + '</div></td>' +
+      '<td>' + esc(e.department) + '</td>' +
+      '<td><span class="badge b-' + e.status + '">' + e.status.replace('_', ' ') + '</span></td></tr>'
+    ).join('') || '<tr><td colspan="3" class="empty-note">No records</td></tr>';
+
+    // leave table
+    const empName = Object.fromEntries(state.employees.map((e) => [e.id, e.fullName]));
+    $('leaveBody').innerHTML = state.leaveRequests.map((l) =>
+      '<tr><td>' + esc(empName[l.employeeId] || l.employeeId) + '</td>' +
+      '<td><span class="badge b-' + l.type + '">' + l.type + '</span></td>' +
+      '<td><span class="badge b-' + l.status + '">' + l.status + '</span></td></tr>'
+    ).join('') || '<tr><td colspan="3" class="empty-note">No records</td></tr>';
+
+    // audit
+    if (state.audit.length) {
+      $('auditList').innerHTML = state.audit.map((a) => {
+        const lbl = OUTCOME_LABEL[a.outcome] || a.outcome;
+        return '<div class="audit-item"><div class="a-top">' +
+          '<span class="outcome-badge o-' + a.outcome + '">' + lbl + '</span>' +
+          '<span class="a-time">' + fmtTime(a.createdAt) + '</span></div>' +
+          '<div class="a-reason">' + esc(a.reason) + '</div></div>';
+      }).join('');
+    }
+
+    // jobs
+    $('jcPending').textContent = state.jobCounts.pending;
+    $('jcRunning').textContent = state.jobCounts.running;
+    $('jcSucceeded').textContent = state.jobCounts.succeeded;
+    $('jcDead').textContent = state.jobCounts.dead_letter;
+    $('ledEmails').textContent = state.effects.emails;
+    $('ledCal').textContent = state.effects.calendarEvents;
+    $('ledHook').textContent = state.effects.webhooks;
+    $('jobList').innerHTML = state.jobs.slice(0, 12).map((j) => {
+      const err = j.lastError && j.status !== 'succeeded'
+        ? '<span class="jerr">' + esc(j.lastError.slice(0, 40)) + '</span>' : '';
+      return '<div class="job-row"><span class="badge b-' + j.status + '">' + j.status.replace('_', ' ') + '</span>' +
+        '<span class="jtype">' + esc(j.type) + '</span>' + err +
+        '<span class="jattempts">try ' + j.attempts + '/' + j.maxAttempts + '</span></div>';
+    }).join('') || '<div class="empty-note">Queue is empty — enqueue a job.</div>';
+
+    // health checks
+    $('checksList').innerHTML = state.health.checks.map((c) =>
+      '<div class="check ' + (c.ok ? 'ok' : 'bad') + '"><span class="ci">' + (c.ok ? '✓' : '✕') + '</span>' +
+      '<span class="cname">' + esc(c.name) + '</span>' +
+      '<span class="cdetail">' + esc(c.detail || (c.ok ? 'ok' : 'failing')) + '</span></div>'
+    ).join('');
+
+    prevEmp = state.counts.employees; prevLeave = state.counts.leave;
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+  function fmtTime(iso) { const d = new Date(iso); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+
+  async function refresh() { render(await api('/api/state')); }
+
+  // ---- sync buttons ----
+  document.querySelectorAll('[data-sync]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const scenario = btn.dataset.sync;
+      const before = await api('/api/state');
+      const { result } = await api('/api/sync/pull', { scenario });
+      const tone = OUTCOME_TONE[result.outcome] || 'ok';
+      const refused = result.outcome.startsWith('rejected') || result.outcome === 'applied_upserts_only';
+      const after = await api('/api/state');
+      render(after);
+
+      // Did any record get destroyed? (It must not, on a hostile sync.)
+      const empDropped = after.counts.employees < before.counts.employees;
+      if (refused) {
+        flashCounter('cEmp', 'empGuard', 'ok', true);
+        flashCounter('cLeave', 'leaveGuard', 'ok', true);
+      }
+      const title = refused
+        ? (empDropped ? '⚠ data lost' : '🛡 data protected')
+        : '✓ sync applied';
+      toast(tone, title + ' — ' + (OUTCOME_LABEL[result.outcome] || result.outcome), result.reason);
+    });
+  });
+
+  // ---- job buttons ----
+  $('jobList');
+  document.querySelectorAll('[data-job]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const kind = btn.dataset.job;
+      if (kind === 'send_email') {
+        // server enqueues the same effect twice; the second collapses.
+        const r = await api('/api/jobs/enqueue', { type: 'send_email' });
+        toast('ok', '✓ Email requested twice, queued once',
+          'Second enqueue deduped: ' + (r.dedupedSecond ? 'yes' : 'no') + '. Watch “Emails sent” stay at exactly one per request.');
+      } else if (kind === 'calendar_sync') {
+        await api('/api/jobs/enqueue', { type: 'calendar_sync' });
+        toast('ok', '✓ Calendar sync queued', 'Idempotent upsert — safe to run more than once.');
+      } else if (kind === 'webhook_flaky') {
+        await api('/api/jobs/enqueue', { type: 'sync_webhook', failTimes: 2 });
+        toast('warn', '⟳ Flaky webhook queued', 'Will fail twice, then succeed via exponential backoff. Hit “Process queue”.');
+      } else if (kind === 'webhook_dead') {
+        await api('/api/jobs/enqueue', { type: 'sync_webhook', failTimes: 10 });
+        toast('bad', '☠ Failing webhook queued', 'Always fails → will exhaust retries and move to the dead-letter queue, not block others.');
+      }
+      refresh();
+    });
+  });
+
+  $('processBtn').addEventListener('click', async () => {
+    const { processed } = await api('/api/jobs/process', {});
+    toast('ok', '▸ Queue processed', processed + ' due job(s) handled this pass. Backoff-delayed retries run on the next pass.');
+    refresh();
+  });
+
+  // initial + light polling so the worker's progress shows without a reload
+  refresh();
+  setInterval(refresh, 2000);
+</script>
+</body>
+</html>
